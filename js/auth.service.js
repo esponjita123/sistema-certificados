@@ -23,7 +23,7 @@ export async function loginAdmin(email, password) {
 export async function logoutAdmin() {
     try {
         await signOut(auth);
-        window.location.href = "index.html"; // Redirigir al buscador público
+        window.location.href = "login.html"; // Redirigir al buscador público
     } catch (error) {
         console.error("Error al cerrar sesión:", error);
     }
@@ -37,7 +37,7 @@ export function verificarSesionActiva() {
         if (!user) {
             // Si no hay un usuario autenticado, redirigir inmediatamente
             alert("Acceso denegado. Por favor inicia sesión.");
-            window.location.href = "index.html"; 
+            window.location.href = "login.html"; 
         }
     });
 }
