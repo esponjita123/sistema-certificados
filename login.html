@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingreso al Panel - Administración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center font-sans relative overflow-hidden">
+
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-900/20 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-900/20 rounded-full blur-3xl"></div>
+
+    <div class="max-w-md w-full bg-slate-800/60 border border-slate-700/50 backdrop-blur-md rounded-2xl p-8 shadow-2xl relative z-10 mx-4">
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-purple-500/10 border border-purple-500/30 rounded-xl text-xl mb-3">
+                🔐
+            </div>
+            <h2 class="text-2xl font-bold text-white">UC Académicas</h2>
+            <p class="text-sm text-slate-400 mt-1">Ingresa tus credenciales para administrar los certificados</p>
+        </div>
+        
+        <form id="formLogin" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Correo Electrónico</label>
+                <input type="email" id="loginEmail" class="bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 w-full text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm" required placeholder="admin@academia.com">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Contraseña</label>
+                <div class="relative">
+                    <input type="password" id="loginPassword" class="bg-slate-900/90 border border-slate-700 rounded-xl pl-4 pr-12 py-3 w-full text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm" required placeholder="••••••••">
+                    
+                    <button type="button" id="btnTogglePassword" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-500 hover:text-slate-300 transition focus:outline-none text-lg">
+                        👁️
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl transition active:scale-95 shadow-lg shadow-purple-900/20 text-sm mt-2">
+                Iniciar Sesión Control Panel →
+            </button>
+        </form>
+
+        <p id="loginError" class="mt-4 text-sm text-rose-400 text-center bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl hidden">
+            ⚠️ Las credenciales ingresadas son incorrectas.
+        </p>
+    </div>
+
+    <script type="module">
+        import { loginAdmin } from './js/auth.service.js';
+
+        const inputPassword = document.getElementById('loginPassword');
+        const btnTogglePassword = document.getElementById('btnTogglePassword');
+        const formLogin = document.getElementById('formLogin');
+        const errorMsg = document.getElementById('loginError');
+
+        // LÓGICA MÁGICA: Mostrar / Ocultar Contraseña al hacer clic en el ojo
+        btnTogglePassword.addEventListener('click', () => {
+            if (inputPassword.type === 'password') {
+                inputPassword.type = 'text';
+                btnTogglePassword.innerText = '🔒'; // Cambia el icono a un candado o un ojo tachado si prefieres
+            } else {
+                inputPassword.type = 'password';
+                btnTogglePassword.innerText = '👁️'; // Vuelve a poner el ojo
+            }
+        });
+
+        // Envío de formulario a Firebase
+        formLogin.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = inputPassword.value.trim();
+
+            try {
+                await loginAdmin(email, pass);
+                window.location.href = "admin.html"; // Redirección exitosa
+            } catch (error) {
+                errorMsg.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
