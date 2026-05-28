@@ -33,11 +33,10 @@ export async function logoutAdmin() {
  * Guardián de seguridad: Si no está logueado, lo expulsa al index.
  */
 export function verificarSesionActiva() {
-    onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            // Si no hay un usuario autenticado, redirigir inmediatamente
-            alert("Acceso denegado. Por favor inicia sesión.");
-            window.location.href = "login.html"; 
-        }
-    });
-}
+    // ... tu lógica que detecta si no hay usuario de Firebase ...
+    if (!usuario) {
+        alert("Acceso denegado. Por favor inicia sesión.");
+        window.location.href = "login.html"; // <-- Asegúrate de que diga login.html
+    }
+
+    };
