@@ -1,14 +1,27 @@
 // js/admin.js
-import { db } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 import { collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { verificarSesionActiva } from './auth.service.js';
+import { verificarSesionActiva, logoutAdmin } from './auth.service.js';
 
+// 1. EJECUTAR EL GUARDIÁN DE SEGURIDAD INMEDIATAMENTE
 verificarSesionActiva();
 
+// 2. CONFIGURAR EL BOTÓN DE CERRAR SESIÓN DE RAÍZ
+const btnCerrarSesion = document.getElementById('btnCerrarSesion');
+if (btnCerrarSesion) {
+    btnCerrarSesion.addEventListener('click', async () => {
+        try {
+            await logoutAdmin();
+        } catch (error) {
+            console.error("Error al presionar cerrar sesión:", error);
+        }
+    });
+}
+
+// 3. CAPTURA DE ELEMENTOS DEL FORMULARIO Y TABLA
 const formCarga = document.getElementById('formCarga');
 const statusAdmin = document.getElementById('statusAdmin');
 const filePdfInput = document.getElementById('filePdf');
-
 const tablaCuerpo = document.getElementById('tablaCuerpo');
 const tablaBuscador = document.getElementById('tablaBuscador');
 const editIdInput = document.getElementById('editId');
@@ -19,6 +32,7 @@ const contenedorInputFile = document.getElementById('contenedorInputFile');
 
 let listaCertificadosMemoria = []; 
 
+// Escuchar cambio en el input de archivo
 if (filePdfInput) {
     filePdfInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -30,7 +44,7 @@ if (filePdfInput) {
     });
 }
 
-// FUNCIÓN PARA VOLVER A RENDERIZAR EL PDF NATIVO DESDE LA TABLA
+// Métodos utilitarios
 const abrirPdfBase64 = (base64String) => {
     try {
         const partes = base64String.split(',');
@@ -48,7 +62,7 @@ const abrirPdfBase64 = (base64String) => {
         window.open(urlBlob, '_blank');
     } catch (error) {
         console.error("Error al abrir PDF:", error);
-        alert("No se pudo abrir el archivo PDF. Puede que el registro sea antiguo o esté corrupto.");
+        alert("No se pudo abrir el archivo PDF.");
     }
 };
 
@@ -64,12 +78,8 @@ const convertirPdfABase64 = (file) => {
 const obtenerFechaHoraExacta = () => {
     const ahora = new Date();
     return ahora.toLocaleString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
         hour12: true
     });
 };
@@ -100,13 +110,12 @@ function renderizarTabla(lista) {
             <td class="p-4 font-mono text-purple-400">${cert.codigo_unico}</td>
             <td class="p-4 text-slate-400 font-medium">${cert.fecha_subida || 'Sin registro'}</td>
             <td class="p-4 flex justify-center items-center gap-2">
-                <button class="btn-ver bg-slate-700/50 border border-slate-600/40 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg font-medium transition" data-id="${cert.id}">👁️ Ver</button>
-                <button class="btn-editar bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 text-blue-400 text-xs px-2.5 py-1.5 rounded-lg font-medium transition" data-id="${cert.id}">✏️ Editar</button>
-                <button class="btn-eliminar bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 text-xs px-2.5 py-1.5 rounded-lg font-medium transition" data-id="${cert.id}">🗑️ Borrar</button>
+                <button class="btn-ver bg-slate-700/50 border border-slate-600/40 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg font-medium transition">👁️ Ver</button>
+                <button class="btn-editar bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 text-blue-400 text-xs px-2.5 py-1.5 rounded-lg font-medium transition">✏️ Editar</button>
+                <button class="btn-eliminar bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 text-xs px-2.5 py-1.5 rounded-lg font-medium transition">🗑️ Borrar</button>
             </td>
         `;
 
-        // Asignación de funciones a los tres botones
         tr.querySelector('.btn-ver').addEventListener('click', () => abrirPdfBase64(cert.url_pdf));
         tr.querySelector('.btn-eliminar').addEventListener('click', () => eliminarRegistro(cert.id));
         tr.querySelector('.btn-editar').addEventListener('click', () => cargarFormularioParaEditar(cert));
@@ -115,11 +124,13 @@ function renderizarTabla(lista) {
     });
 }
 
-tablaBuscador.addEventListener('input', (e) => {
-    const texto = e.target.value.trim().toLowerCase();
-    const filtrados = listaCertificadosMemoria.filter(c => c.dni_alumno.toLowerCase().includes(texto));
-    renderizarTabla(filtrados);
-});
+if (tablaBuscador) {
+    tablaBuscador.addEventListener('input', (e) => {
+        const texto = e.target.value.trim().toLowerCase();
+        const filtrados = listaCertificadosMemoria.filter(c => c.dni_alumno.toLowerCase().includes(texto));
+        renderizarTabla(filtrados);
+    });
+}
 
 async function eliminarRegistro(id) {
     if (confirm("🚨 ¿Estás seguro de eliminar este certificado permanentemente?")) {
@@ -156,7 +167,9 @@ function cargarFormularioParaEditar(cert) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-btnCancelarEdicion.addEventListener('click', resetearFormularioModoRegistro);
+if (btnCancelarEdicion) {
+    btnCancelarEdicion.addEventListener('click', resetearFormularioModoRegistro);
+}
 
 function resetearFormularioModoRegistro() {
     formCarga.reset();
@@ -170,58 +183,62 @@ function resetearFormularioModoRegistro() {
     contenedorInputFile.querySelector('p.text-sm').className = "text-sm font-medium text-slate-300 mt-2";
 }
 
-formCarga.addEventListener('submit', async (e) => {
-    e.preventDefault();
+if (formCarga) {
+    formCarga.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const idEdicion = editIdInput.value;
-    const select = document.getElementById('selectCurso');
-    const optionSelected = select.options[select.selectedIndex];
-    
-    const dni = document.getElementById('adminDni').value.trim();
-    const nombre = document.getElementById('adminNombre').value.trim();
-    const pdfFile = filePdfInput.files[0];
+        const idEdicion = editIdInput.value;
+        const select = document.getElementById('selectCurso');
+        const optionSelected = select.options[select.selectedIndex];
+        
+        const dni = document.getElementById('adminDni').value.trim();
+        const nombre = document.getElementById('adminNombre').value.trim();
+        const pdfFile = filePdfInput.files[0];
 
-    const nombreCurso = optionSelected.getAttribute('data-curso');
-    const microCredencial = optionSelected.getAttribute('data-micro');
-    const organizacion = optionSelected.getAttribute('data-org');
+        const nombreCurso = optionSelected.getAttribute('data-curso');
+        const microCredencial = optionSelected.getAttribute('data-micro');
+        const organizacion = optionSelected.getAttribute('data-org');
 
-    mostrarMensaje("🔄 Guardando en la base de datos segura...", "text-blue-400", "border-blue-500/20", "bg-blue-500/10");
+        mostrarMensaje("🔄 Guardando en la base de datos segura...", "text-blue-400", "border-blue-500/20", "bg-blue-500/10");
 
-    try {
-        let datosAEnviar = {
-            dni_alumno: dni,
-            nombre_alumno: nombre,
-            nombre_curso: nombreCurso,
-            micro_credencial: microCredencial,
-            organizacion: organizacion
-        };
+        try {
+            let datosAEnviar = {
+                dni_alumno: dni,
+                nombre_alumno: nombre,
+                nombre_curso: nombreCurso,
+                micro_credencial: microCredencial,
+                organizacion: organizacion
+            };
 
-        if (pdfFile) {
-            const pdfBase64 = await convertirPdfABase64(pdfFile);
-            datosAEnviar.url_pdf = pdfBase64;
+            if (pdfFile) {
+                const pdfBase64 = await convertirPdfABase64(pdfFile);
+                datosAEnviar.url_pdf = pdfBase64;
+            }
+
+            if (idEdicion) {
+                datosAEnviar.fecha_subida = obtenerFechaHoraExacta();
+                await updateDoc(doc(db, "certificados", idEdicion), datosAEnviar);
+                mostrarMensaje("✅ Registro modificado y actualizado.", "text-emerald-400", "border-emerald-500/20", "bg-emerald-500/10");
+            } else {
+                datosAEnviar.codigo_unico = "CERT-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+                datosAEnviar.fecha_subida = obtenerFechaHoraExacta();
+
+                await addDoc(collection(db, "certificados"), datosAEnviar);
+                mostrarMensaje("✅ Nuevo certificado registrado con éxito.", "text-emerald-400", "border-emerald-500/20", "bg-emerald-500/10");
+            }
+
+            resetearFormularioModoRegistro();
+
+        } catch (error) {
+            console.error(error);
+            mostrarMensaje("❌ Error crítico al guardar los datos.", "text-rose-400", "border-rose-500/20", "bg-rose-500/10");
         }
-
-        if (idEdicion) {
-            datosAEnviar.fecha_subida = obtenerFechaHoraExacta();
-            await updateDoc(doc(db, "certificados", idEdicion), datosAEnviar);
-            mostrarMensaje("✅ Registro modificado y actualizado.", "text-emerald-400", "border-emerald-500/20", "bg-emerald-500/10");
-        } else {
-            datosAEnviar.codigo_unico = "CERT-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-            datosAEnviar.fecha_subida = obtenerFechaHoraExacta();
-
-            await addDoc(collection(db, "certificados"), datosAEnviar);
-            mostrarMensaje("✅ Nuevo certificado registrado con éxito.", "text-emerald-400", "border-emerald-500/20", "bg-emerald-500/10");
-        }
-
-        resetearFormularioModoRegistro();
-
-    } catch (error) {
-        console.error(error);
-        mostrarMensaje("❌ Error crítico al guardar los datos.", "text-rose-400", "border-rose-500/20", "bg-rose-500/10");
-    }
-});
+    });
+}
 
 function mostrarMensaje(texto, colorClase, bordeClase, fondoClase) {
-    statusAdmin.className = `mt-4 text-sm text-center font-medium p-3 rounded-xl border ${colorClase} ${bordeClase} ${fondoClase} block`;
-    statusAdmin.innerText = texto;
+    if (statusAdmin) {
+        statusAdmin.className = `mt-4 text-sm text-center font-medium p-3 rounded-xl border ${colorClase} ${bordeClase} ${fondoClase} block`;
+        statusAdmin.innerText = texto;
+    }
 }
