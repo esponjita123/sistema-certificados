@@ -1,24 +1,31 @@
 // js/admin.js
 import { db, auth } from './firebase-config.js';
 import { collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { verificarSesionActiva, logoutAdmin } from './auth.service.js';
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// 1. EJECUTAR EL GUARDIÁN DE SEGURIDAD INMEDIATAMENTE
-verificarSesionActiva();
+// --- GUARDIÁN DE SEGURIDAD INTERNO DIRECTO ---
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        alert("Sesion Cerrada.");
+        window.location.href = "login.html";
+    }
+});
 
-// 2. CONFIGURAR EL BOTÓN DE CERRAR SESIÓN DE RAÍZ
+// --- BOTÓN CERRAR SESIÓN NATIVO ---
 const btnCerrarSesion = document.getElementById('btnCerrarSesion');
 if (btnCerrarSesion) {
     btnCerrarSesion.addEventListener('click', async () => {
         try {
-            await logoutAdmin();
+            await signOut(auth);
+            window.location.href = "login.html";
         } catch (error) {
-            console.error("Error al presionar cerrar sesión:", error);
+            console.error("Error al cerrar sesión:", error);
+            alert("Hubo un problema al cerrar la sesión.");
         }
     });
 }
 
-// 3. CAPTURA DE ELEMENTOS DEL FORMULARIO Y TABLA
+// --- CAPTURA DE ELEMENTOS DE LA INTERFAZ ---
 const formCarga = document.getElementById('formCarga');
 const statusAdmin = document.getElementById('statusAdmin');
 const filePdfInput = document.getElementById('filePdf');
@@ -32,7 +39,7 @@ const contenedorInputFile = document.getElementById('contenedorInputFile');
 
 let listaCertificadosMemoria = []; 
 
-// Escuchar cambio en el input de archivo
+// Control visual del input file
 if (filePdfInput) {
     filePdfInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -44,7 +51,7 @@ if (filePdfInput) {
     });
 }
 
-// Métodos utilitarios
+// Visor de PDF en Base64
 const abrirPdfBase64 = (base64String) => {
     try {
         const partes = base64String.split(',');
