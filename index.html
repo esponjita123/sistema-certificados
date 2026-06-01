@@ -3,65 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificación de Certificados Académicos</title>
+    <title>Verificación de Certificados - Universidad Continental</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ucMorado: '#7800c0',
+                        ucRojo: '#e60000',
+                        ucGris: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col justify-between">
 
-    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-900/30 rounded-full blur-3xl"></div>
-        <div class="absolute top-1/2 -right-40 w-96 h-96 bg-indigo-900/20 rounded-full blur-3xl"></div>
-    </div>
-
-    <header class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-12 pb-6 text-center">
-        <div class="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-300 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-sm mb-4">
-            🛡️ Sistema de Verificación Oficial
-        </div>
-        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-purple-400">
-            Consulta tus Certificaciones
-        </h1>
-        <p class="text-slate-400 mt-3 text-base md:text-lg max-w-xl mx-auto">
-            Ingresa tu documento de identidad para validar, visualizar y descargar tus credenciales académicas firmadas.
-        </p>
-    </header>
-
-    <main class="relative z-10 flex-grow max-w-4xl w-full mx-auto px-6 py-8">
-        <div class="bg-slate-800/60 border border-slate-700/50 backdrop-blur-md rounded-2xl p-6 md:p-8 max-w-xl mx-auto shadow-2xl">
-            <label for="inputDni" class="block text-sm font-medium text-slate-300 mb-2">Documento de Identidad (DNI / Pasaporte)</label>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <div class="relative flex-grow">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500 text-lg">
-                        🪪
+    <header class="bg-white border-b border-slate-200 shadow-sm px-6 py-4">
+        <div class="max-w-6xl w-full mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="border-r-2 border-slate-300 pr-4">
+                    <span class="text-xl font-black tracking-tighter text-slate-900 flex items-center gap-1">
+                        <span class="text-ucMorado">Universidad</span>Continental
                     </span>
-                    <input type="text" id="inputDni" placeholder="Ej. 74839201" 
-                           class="bg-slate-900/90 border border-slate-700 rounded-xl pl-11 pr-4 py-3 w-full text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition text-base font-medium">
                 </div>
-                <button id="btnBuscar" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-8 py-3 rounded-xl font-semibold transition active:scale-95 shadow-lg shadow-purple-900/20 text-base">
-                    Buscar
-                </button>
-            </div>
-            <p id="errorMsg" class="text-rose-400 text-sm mt-3 flex items-center gap-1.5 hidden">
-                ⚠️ Por favor, ingresa un número de documento válido.
-            </p>
-        </div>
-
-        <div id="resultadosContenedor" class="mt-12 hidden">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
-                <h3 class="text-xl font-bold text-slate-200 flex items-center gap-2">
-                    🎓 Certificados Encontrados
-                </h3>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 hidden sm:inline">Portal del Estudiante</span>
             </div>
             
-            <div id="listaCertificados" class="grid gap-6 md:grid-cols-2">
+            <a href="login.html" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5">
+                <i class="fa-solid fa-user-shield"></i> LOGIN ADMIN
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center px-4 py-12">
+        <div class="max-w-xl w-full bg-white border border-slate-200 shadow-2xl rounded-2xl p-8 md:p-10 space-y-6 text-center">
+            
+            <div>
+                <span class="inline-flex items-center gap-1.5 bg-purple-50 text-ucMorado text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border border-purple-100 mb-3">
+                    <i class="fa-solid fa-shield-halved animate-pulse"></i> Sistema de Verificación Oficial
+                </span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Consulta tus Certificaciones</h2>
+                <p class="text-slate-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
+                    Ingresa tu documento de identidad para validar, visualizar y descargar tus credenciales académicas firmadas.
+                </p>
+            </div>
+
+            <form id="formBusqueda" class="space-y-5 text-left">
+                <div class="flex flex-col space-y-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+                        Documento de Identidad (DNI / Pasaporte)
+                    </label>
+                    <div class="relative flex items-center w-full">
+                        <i class="fa-solid fa-id-card absolute left-4 text-slate-400 text-base"></i>
+                        <input type="text" id="inputDni" required placeholder="Ej. 74839201" 
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-12 pr-4 py-4 text-base text-slate-900 font-bold placeholder-slate-400 focus:outline-none focus:border-ucMorado focus:bg-white transition shadow-sm">
+                    </div>
                 </div>
+
+                <button type="submit" class="w-full bg-ucMorado hover:bg-purple-900 text-white font-bold py-4 rounded-xl transition duration-200 shadow-md active:scale-[0.99] text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass"></i> Buscar Certificados
+                </button>
+            </form>
+
+            <p id="mensajeEstado" class="text-xs font-bold p-3 rounded-xl border text-center hidden"></p>
+
+            <div id="resultadoBusqueda" class="space-y-4 pt-2 hidden"></div>
+
         </div>
     </main>
 
-    <footer class="relative z-10 w-full border-t border-slate-800/60 bg-slate-950/40 backdrop-blur-sm text-center py-6 text-slate-500 text-sm">
-        &copy; 2026 Academia Especializada. Registro protegido por cifrado criptográfico.
+    <footer class="bg-white border-t border-slate-200 text-center py-4 text-slate-400 text-xs font-medium">
+        &copy; 2026 Universidad Continental | Dirección de Tecnologías de Información.
     </footer>
 
-    <script type="module" src="js/buscador.js"></script>
+    <script type="module" src="js/index.js"></script>
 </body>
 </html>

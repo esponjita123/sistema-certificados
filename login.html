@@ -3,82 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ingreso al Panel - Administración</title>
+    <title>Intranet Administrador - Universidad Continental</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center font-sans relative overflow-hidden">
-
-    <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-900/20 rounded-full blur-3xl"></div>
-    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-900/20 rounded-full blur-3xl"></div>
-
-    <div class="max-w-md w-full bg-slate-800/60 border border-slate-700/50 backdrop-blur-md rounded-2xl p-8 shadow-2xl relative z-10 mx-4">
-        <div class="text-center mb-6">
-            <div class="inline-flex items-center justify-center w-12 h-12 bg-purple-500/10 border border-purple-500/30 rounded-xl text-xl mb-3">
-                🔐
-            </div>
-            <h2 class="text-2xl font-bold text-white">UC Académicas</h2>
-            <p class="text-sm text-slate-400 mt-1">Ingresa tus credenciales para administrar los certificados</p>
-        </div>
-        
-        <form id="formLogin" class="space-y-5">
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Correo Electrónico</label>
-                <input type="email" id="loginEmail" class="bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 w-full text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm" required placeholder="admin@academia.com">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">Contraseña</label>
-                <div class="relative">
-                    <input type="password" id="loginPassword" class="bg-slate-900/90 border border-slate-700 rounded-xl pl-4 pr-12 py-3 w-full text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm" required placeholder="••••••••">
-                    
-                    <button type="button" id="btnTogglePassword" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-500 hover:text-slate-300 transition focus:outline-none text-lg">
-                        👁️
-                    </button>
-                </div>
-            </div>
-
-            <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl transition active:scale-95 shadow-lg shadow-purple-900/20 text-sm mt-2">
-                Iniciar Sesión Control Panel →
-            </button>
-        </form>
-
-        <p id="loginError" class="mt-4 text-sm text-rose-400 text-center bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl hidden">
-            ⚠️ Las credenciales ingresadas son incorrectas.
-        </p>
-    </div>
-
-    <script type="module">
-        import { loginAdmin } from './js/auth.service.js';
-
-        const inputPassword = document.getElementById('loginPassword');
-        const btnTogglePassword = document.getElementById('btnTogglePassword');
-        const formLogin = document.getElementById('formLogin');
-        const errorMsg = document.getElementById('loginError');
-
-        // LÓGICA MÁGICA: Mostrar / Ocultar Contraseña al hacer clic en el ojo
-        btnTogglePassword.addEventListener('click', () => {
-            if (inputPassword.type === 'password') {
-                inputPassword.type = 'text';
-                btnTogglePassword.innerText = '🔒'; // Cambia el icono a un candado o un ojo tachado si prefieres
-            } else {
-                inputPassword.type = 'password';
-                btnTogglePassword.innerText = '👁️'; // Vuelve a poner el ojo
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ucMorado: '#7800c0',
+                        ucRojo: '#e60000',
+                        ucGris: '#1e293b'
+                    }
+                }
             }
-        });
-
-        // Envío de formulario a Firebase
-        formLogin.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
-            const pass = inputPassword.value.trim();
-
-            try {
-                await loginAdmin(email, pass);
-                window.location.href = "admin.html"; // Redirección exitosa
-            } catch (error) {
-                errorMsg.classList.remove('hidden');
-            }
-        });
+        }
     </script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col justify-between">
+
+    <header class="bg-white border-b border-slate-200 shadow-sm px-6 py-4">
+        <div class="max-w-6xl w-full mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="border-r-2 border-slate-300 pr-4">
+                    <span class="text-xl font-black tracking-tighter text-slate-900 flex items-center gap-1">
+                        <span class="text-ucMorado">Universidad</span>Continental
+                    </span>
+                </div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Consola de Seguridad</span>
+            </div>
+            
+            <a href="index.html" class="text-sm font-semibold text-slate-600 hover:text-ucMorado transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Portal
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center px-4 py-12">
+        <div class="max-w-md w-full bg-white border border-slate-200 shadow-xl rounded-2xl p-8 md:p-10 space-y-6">
+            
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-purple-50 text-ucMorado rounded-2xl flex items-center justify-center text-xl mx-auto shadow-inner border border-purple-100">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Acceso Privado</h2>
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Gestión de Credenciales Académicas</p>
+            </div>
+
+            <form id="formLogin" class="space-y-6">
+                
+                <div class="flex flex-col space-y-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+                        Correo Institucional
+                    </label>
+                    <div class="relative flex items-center w-full">
+                        <i class="fa-solid fa-envelope absolute left-4 text-slate-400"></i>
+                        <input type="email" id="loginEmail" required placeholder="admin@continental.edu.pe" 
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-11 pr-4 py-3.5 text-sm text-slate-900 font-medium placeholder-slate-400 focus:outline-none focus:border-ucMorado focus:bg-white transition shadow-sm">
+                    </div>
+                </div>
+
+                <div class="flex flex-col space-y-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+                        Contraseña de Seguridad
+                    </label>
+                    <div class="relative flex items-center w-full">
+                        <i class="fa-solid fa-key absolute left-4 text-slate-400"></i>
+                        <input type="password" id="loginPassword" required placeholder="••••••••••••" 
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-11 pr-12 py-3.5 text-sm text-slate-900 font-medium placeholder-slate-400 focus:outline-none focus:border-ucMorado focus:bg-white transition shadow-sm">
+                        
+                        <button type="button" id="btnTogglePassword" class="absolute right-4 text-slate-400 hover:text-ucMorado transition focus:outline-none z-20">
+                            <i id="iconoOjo" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-ucMorado hover:bg-purple-900 text-white font-bold py-4 rounded-xl transition duration-200 shadow-md active:scale-[0.99] text-sm uppercase tracking-wider flex items-center justify-center gap-2 mt-4">
+                    <i class="fa-solid fa-right-to-bracket"></i> Autenticar Administrador
+                </button>
+            </form>
+
+            <p id="mensajeLogin" class="text-xs font-bold p-3 rounded-xl border text-center hidden"></p>
+
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 text-center py-4 text-slate-400 text-xs font-medium">
+        &copy; 2026 Universidad Continental | Dirección de Tecnologías de Información.
+    </footer>
+
+    <script type="module" src="js/login.js"></script>
 </body>
 </html>

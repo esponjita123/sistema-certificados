@@ -1,251 +1,266 @@
 // js/admin.js
-import { db, auth } from './firebase-config.js';
-import { collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- GUARDIÁN DE SEGURIDAD INTERNO DIRECTO ---
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        alert("Sesion Cerrada.");
-        window.location.href = "login.html";
-    }
-});
-
-// --- BOTÓN CERRAR SESIÓN NATIVO ---
-const btnCerrarSesion = document.getElementById('btnCerrarSesion');
-if (btnCerrarSesion) {
-    btnCerrarSesion.addEventListener('click', async () => {
-        try {
-            await signOut(auth);
-            window.location.href = "login.html";
-        } catch (error) {
-            console.error("Error al cerrar sesión:", error);
-            alert("Hubo un problema al cerrar la sesión.");
-        }
-    });
-}
-
-// --- CAPTURA DE ELEMENTOS DE LA INTERFAZ ---
+// Referencias del DOM
 const formCarga = document.getElementById('formCarga');
+const selectCurso = document.getElementById('selectCurso');
+const selectCarrera = document.getElementById('selectCarrera');
+const adminDni = document.getElementById('adminDni');
+const adminNombre = document.getElementById('adminNombre');
+const filePdf = document.getElementById('filePdf');
+const zonaArrastre = document.getElementById('zonaArrastre');
+const contenidoZona = document.getElementById('contenidoZona');
+const btnGuardar = document.getElementById('btnGuardar');
+const editId = document.getElementById('editId');
 const statusAdmin = document.getElementById('statusAdmin');
-const filePdfInput = document.getElementById('filePdf');
+const btnCancelarEdicion = document.getElementById('btnCancelarEdicion');
+const btnCerrarSesion = document.getElementById('btnCerrarSesion');
 const tablaCuerpo = document.getElementById('tablaCuerpo');
 const tablaBuscador = document.getElementById('tablaBuscador');
-const editIdInput = document.getElementById('editId');
-const formTitulo = document.getElementById('formTitulo');
-const btnGuardar = document.getElementById('btnGuardar');
-const btnCancelarEdicion = document.getElementById('btnCancelarEdicion');
-const contenedorInputFile = document.getElementById('contenedorInputFile');
 
-let listaCertificadosMemoria = []; 
+let base64PdfGlobal = "";
+let todosLosCertificados = [];
 
-// Control visual del input file
-if (filePdfInput) {
-    filePdfInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        const pTexto = filePdfInput.parentElement.querySelector('p.text-sm');
-        if (file && pTexto) {
-            pTexto.innerText = `📄 Listo: ${file.name}`;
-            pTexto.className = "text-sm font-semibold text-emerald-400 mt-2";
-        }
-    });
-}
-
-// Visor de PDF en Base64
-const abrirPdfBase64 = (base64String) => {
-    try {
-        const partes = base64String.split(',');
-        const tipoContenido = partes[0].split(':')[1].split(';')[0];
-        const bytesBase64 = atob(partes[1]);
-        const longitud = bytesBase64.length;
-        const arregloBytes = new Uint8Array(longitud);
-
-        for (let i = 0; i < longitud; i++) {
-            arregloBytes[i] = bytesBase64.charCodeAt(i);
-        }
-
-        const blob = new Blob([arregloBytes], { type: tipoContenido });
-        const urlBlob = URL.createObjectURL(blob);
-        window.open(urlBlob, '_blank');
-    } catch (error) {
-        console.error("Error al abrir PDF:", error);
-        alert("No se pudo abrir el archivo PDF.");
+// 1. Guardián de Autenticación
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "login.html";
+    } else {
+        obtenerCertificados();
     }
-};
-
-const convertirPdfABase64 = (file) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-    });
-};
-
-const obtenerFechaHoraExacta = () => {
-    const ahora = new Date();
-    return ahora.toLocaleString('es-ES', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: true
-    });
-};
-
-// --- ESCUCHAR FIRESTORE EN TIEMPO REAL ---
-onSnapshot(collection(db, "certificados"), (snapshot) => {
-    listaCertificadosMemoria = [];
-    snapshot.forEach((docSnap) => {
-        listaCertificadosMemoria.push({ id: docSnap.id, ...docSnap.data() });
-    });
-    renderizarTabla(listaCertificadosMemoria);
 });
 
-function renderizarTabla(lista) {
-    tablaCuerpo.innerHTML = "";
-    if (lista.length === 0) {
-        tablaCuerpo.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No hay registros que coincidan.</td></tr>`;
+// Cerrar Sesión
+btnCerrarSesion.addEventListener('click', () => {
+    signOut(auth).then(() => window.location.href = "login.html");
+});
+
+// Convertir PDF a Base64 y refrescar visualmente el cuadro de subida
+filePdf.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+        restablecerCuadroPdf();
+        return;
+    }
+    
+    if (file.type !== "application/pdf") {
+        mostrarStatus("❌ Solo se admiten archivos en formato PDF.", "red");
+        restablecerCuadroPdf();
         return;
     }
 
-    lista.forEach((cert) => {
+    const reader = new FileReader();
+    reader.onload = () => { 
+        base64PdfGlobal = reader.result; 
+        
+        // Transformar visualmente la caja de carga a estado exitoso
+        zonaArrastre.className = "border-2 border-solid border-emerald-400 bg-emerald-50 rounded-xl p-6 transition relative flex flex-col items-center justify-center text-center cursor-pointer";
+        contenidoZona.innerHTML = `
+            <span class="text-3xl text-emerald-600 animate-bounce">
+                <i class="fa-solid fa-file-circle-check"></i>
+            </span>
+            <p class="text-sm font-bold text-emerald-800 mt-2">¡PDF Cargado Exitosamente!</p>
+            <p class="text-xs text-emerald-600 font-mono mt-1 bg-white px-3 py-1 rounded-md border border-emerald-200 max-w-xs truncate">${file.name}</p>
+        `;
+        statusAdmin.classList.add('hidden'); // Ocultar mensaje repetitivo de abajo
+    };
+    reader.onerror = () => {
+        console.error("Error al leer el archivo");
+        mostrarStatus("❌ Error al leer el archivo PDF seleccionado.", "red");
+        restablecerCuadroPdf();
+    };
+    reader.readAsDataURL(file);
+});
+
+// Devolver la caja de subida a su diseño original
+function restablecerCuadroPdf() {
+    base64PdfGlobal = "";
+    filePdf.value = "";
+    zonaArrastre.className = "border-2 border-dashed border-slate-300 hover:border-ucMorado bg-slate-50 rounded-xl p-6 transition relative flex flex-col items-center justify-center text-center cursor-pointer group";
+    contenidoZona.innerHTML = `
+        <span class="text-3xl text-slate-400 group-hover:scale-110 group-hover:text-ucMorado transition duration-200">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+        </span>
+        <p class="text-sm font-bold text-slate-700 mt-2">Haz clic aquí para cargar el documento PDF</p>
+        <p class="text-xs text-slate-400 mt-1">El archivo se convertirá localmente de forma segura.</p>
+    `;
+}
+
+// Mostrar Estado Inferior (Para alertas o errores globales)
+const mostrarStatus = (msg, tipo) => {
+    statusAdmin.innerText = msg;
+    statusAdmin.className = `mt-4 text-sm text-center font-bold p-3 rounded-xl border block bg-${tipo === 'red' ? 'red' : 'emerald'}-50 text-${tipo === 'red' ? 'red' : 'emerald'}-600 border-${tipo === 'red' ? 'red' : 'emerald'}-100`;
+    statusAdmin.classList.remove('hidden');
+};
+
+// Limpiar Formulario Completo
+const limpiarFormulario = () => {
+    formCarga.reset();
+    editId.value = "";
+    restablecerCuadroPdf();
+    statusAdmin.classList.add('hidden');
+    selectCarrera.value = "Ingeniería de Sistemas e Informática";
+    document.getElementById('formTitulo').innerText = "Registrar Nuevo Certificado";
+    btnGuardar.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar y Validar Credencial`;
+    btnCancelarEdicion.classList.add('hidden');
+};
+btnCancelarEdicion.addEventListener('click', limpiarFormulario);
+
+// 2. Guardar o Editar en Firestore
+formCarga.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const option = selectCurso.options[selectCurso.selectedIndex];
+    const dni = adminDni.value.trim();
+    const nombre = adminNombre.value.trim();
+    const carrera = selectCarrera.value;
+
+    const cursoReal = option.getAttribute('data-curso');
+    const microCredencial = option.getAttribute('data-micro');
+    const organizacion = option.getAttribute('data-org');
+
+    if (!editId.value && !base64PdfGlobal) {
+        mostrarStatus("❌ Es obligatorio adjuntar un archivo PDF válido.", "red");
+        return;
+    }
+
+    try {
+        mostrarStatus("⏳ Sincronizando datos con el servidor...", "emerald");
+
+        if (editId.value) {
+            // EDITAR REGISTRO
+            const docRef = doc(db, "certificados", editId.value);
+            const actualizacion = {
+                dni_alumno: dni,
+                nombre_alumno: nombre,
+                carrera_alumno: carrera,
+                nombre_curso: cursoReal,
+                micro_credencial: microCredencial,
+                organizacion: organizacion,
+                clave_curso: selectCurso.value
+            };
+            if (base64PdfGlobal) actualizacion.url_pdf = base64PdfGlobal;
+
+            await updateDoc(docRef, actualizacion);
+            mostrarStatus("✅ Credencial modificada exitosamente en Firestore.", "emerald");
+        } else {
+            // CREAR NUEVO REGISTRO
+            const codigoUnico = "UC-" + Math.floor(100000 + Math.random() * 900000);
+            await addDoc(collection(db, "certificados"), {
+                dni_alumno: dni,
+                nombre_alumno: nombre,
+                carrera_alumno: carrera,
+                nombre_curso: cursoReal,
+                micro_credencial: microCredencial,
+                organizacion: organizacion,
+                clave_curso: selectCurso.value,
+                codigo_unico: codigoUnico,
+                url_pdf: base64PdfGlobal,
+                fecha_creacion: serverTimestamp()
+            });
+            mostrarStatus("✅ Credencial oficial registrada con éxito.", "emerald");
+        }
+        limpiarFormulario();
+        obtenerCertificados();
+    } catch (err) {
+        console.error(err);
+        mostrarStatus("🚨 Error crítico al guardar los datos.", "red");
+    }
+});
+
+// 3. Obtener Datos de Firestore
+async function obtenerCertificados() {
+    try {
+        const snapshot = await getDocs(collection(db, "certificados"));
+        todosLosCertificados = [];
+        snapshot.forEach(doc => {
+            todosLosCertificados.push({ id: doc.id, ...doc.data() });
+        });
+        renderizarTabla(todosLosCertificados);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// 4. Renderizar Tabla Dinámica
+function renderizarTabla(arr) {
+    tablaCuerpo.innerHTML = "";
+    if (arr.length === 0) {
+        tablaCuerpo.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">No hay registros cargados.</td></tr>`;
+        return;
+    }
+
+    arr.forEach(data => {
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-800/30 transition-colors border-b border-slate-800/40 text-slate-300 text-xs md:text-sm";
+        tr.className = "hover:bg-slate-50 border-b border-slate-100 transition text-xs";
+        
+        let fechaLegible = "Reciente";
+        if (data.fecha_creacion?.toDate) {
+            fechaLegible = data.fecha_creacion.toDate().toLocaleString();
+        }
+
         tr.innerHTML = `
-            <td class="p-4 font-medium text-white">${cert.dni_alumno}</td>
-            <td class="p-4">${cert.nombre_alumno}</td>
-            <td class="p-4 max-w-xs truncate" title="${cert.nombre_curso}">${cert.nombre_curso}</td>
-            <td class="p-4 font-mono text-purple-400">${cert.codigo_unico}</td>
-            <td class="p-4 text-slate-400 font-medium">${cert.fecha_subida || 'Sin registro'}</td>
+            <td class="p-4 font-mono font-bold text-slate-900">${data.dni_alumno}</td>
+            <td class="p-4 font-bold">${data.nombre_alumno}</td>
+            <td class="p-4">
+                <div class="font-bold text-slate-800">${data.nombre_curso}</div>
+                <div class="text-[10px] text-purple-600 font-semibold uppercase tracking-tight">${data.carrera_alumno || 'Ingeniería de Sistemas e Informática'}</div>
+            </td>
+            <td class="p-4 font-mono text-purple-800 font-bold bg-purple-50/50 rounded">${data.codigo_unico}</td>
+            <td class="p-4 text-slate-400 font-medium">${fechaLegible}</td>
             <td class="p-4 flex justify-center items-center gap-2">
-                <button class="btn-ver bg-slate-700/50 border border-slate-600/40 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg font-medium transition">👁️ Ver</button>
-                <button class="btn-editar bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 text-blue-400 text-xs px-2.5 py-1.5 rounded-lg font-medium transition">✏️ Editar</button>
-                <button class="btn-eliminar bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 text-xs px-2.5 py-1.5 rounded-lg font-medium transition">🗑️ Borrar</button>
+                <button class="btn-ver bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-bold transition flex items-center gap-1"><i class="fa-solid fa-eye"></i> Ver</button>
+                <button class="btn-editar bg-blue-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg font-bold transition flex items-center gap-1"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+                <button class="btn-eliminar bg-red-50 text-ucRojo hover:bg-red-100 px-2.5 py-1.5 rounded-lg font-bold transition flex items-center gap-1"><i class="fa-solid fa-trash-can"></i> Borrar</button>
             </td>
         `;
 
-        tr.querySelector('.btn-ver').addEventListener('click', () => abrirPdfBase64(cert.url_pdf));
-        tr.querySelector('.btn-eliminar').addEventListener('click', () => eliminarRegistro(cert.id));
-        tr.querySelector('.btn-editar').addEventListener('click', () => cargarFormularioParaEditar(cert));
+        // Acción: Ver PDF
+        tr.querySelector('.btn-ver').addEventListener('click', () => {
+            const partes = data.url_pdf.split(',');
+            const blob = new Blob([Uint8Array.from(atob(partes[1]), c => c.charCodeAt(0))], { type: partes[0].split(':')[1].split(';')[0] });
+            window.open(URL.createObjectURL(blob), '_blank');
+        });
+
+        // Acción: Editar
+        tr.querySelector('.btn-editar').addEventListener('click', () => {
+            editId.value = data.id;
+            adminDni.value = data.dni_alumno;
+            adminNombre.value = data.nombre_alumno;
+            selectCurso.value = data.clave_curso || "";
+            if(data.carrera_alumno) selectCarrera.value = data.carrera_alumno;
+            
+            // Cuando editas, le avisamos visualmente que hay un archivo cargado previamente
+            zonaArrastre.className = "border-2 border-solid border-purple-400 bg-purple-50 rounded-xl p-6 transition relative flex flex-col items-center justify-center text-center cursor-pointer";
+            contenidoZona.innerHTML = `
+                <span class="text-3xl text-ucMorado"><i class="fa-solid fa-file-pdf"></i></span>
+                <p class="text-sm font-bold text-purple-900 mt-2">PDF Original Conservado</p>
+                <p class="text-xs text-purple-600 mt-1">Opcional: Suelta un nuevo archivo si deseas reemplazarlo.</p>
+            `;
+
+            document.getElementById('formTitulo').innerText = "Modificar Certificado Existente";
+            btnGuardar.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> Actualizar Credencial`;
+            btnCancelarEdicion.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Acción: Eliminar
+        tr.querySelector('.btn-eliminar').addEventListener('click', async () => {
+            if (confirm(`¿Estás seguro de eliminar el certificado de ${data.nombre_alumno}?`)) {
+                await deleteDoc(doc(db, "certificados", data.id));
+                obtenerCertificados();
+            }
+        });
 
         tablaCuerpo.appendChild(tr);
     });
 }
 
-if (tablaBuscador) {
-    tablaBuscador.addEventListener('input', (e) => {
-        const texto = e.target.value.trim().toLowerCase();
-        const filtrados = listaCertificadosMemoria.filter(c => c.dni_alumno.toLowerCase().includes(texto));
-        renderizarTabla(filtrados);
-    });
-}
-
-async function eliminarRegistro(id) {
-    if (confirm("🚨 ¿Estás seguro de eliminar este certificado permanentemente?")) {
-        try {
-            await deleteDoc(doc(db, "certificados", id));
-            mostrarMensaje("🗑️ Certificado eliminado con éxito.", "text-emerald-400", "border-emerald-500/20", "bg-emerald-500/10");
-        } catch (error) {
-            console.error(error);
-        }
-    }
-}
-
-function cargarFormularioParaEditar(cert) {
-    editIdInput.value = cert.id;
-    document.getElementById('adminDni').value = cert.dni_alumno;
-    document.getElementById('adminNombre').value = cert.nombre_alumno;
-    
-    const select = document.getElementById('selectCurso');
-    for (let option of select.options) {
-        if (option.getAttribute('data-curso') === cert.nombre_curso) {
-            select.value = option.value;
-            break;
-        }
-    }
-
-    formTitulo.innerText = "✏️ Modificar Registro";
-    btnGuardar.innerText = "Guardar Cambios Actualizados ✔️";
-    btnGuardar.className = "flex-grow bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl transition";
-    btnCancelarEdicion.classList.remove('hidden');
-    
-    contenedorInputFile.querySelector('p.text-sm').innerText = "Opcional: Selecciona un nuevo PDF solo si deseas reemplazar el actual";
-    filePdfInput.required = false;
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-if (btnCancelarEdicion) {
-    btnCancelarEdicion.addEventListener('click', resetearFormularioModoRegistro);
-}
-
-function resetearFormularioModoRegistro() {
-    formCarga.reset();
-    editIdInput.value = "";
-    formTitulo.innerText = "Registrar Nuevo Certificado";
-    btnGuardar.innerText = "Subir y Registrar Credencial 🚀";
-    btnGuardar.className = "flex-grow bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-3 rounded-xl transition";
-    btnCancelarEdicion.classList.add('hidden');
-    filePdfInput.required = true;
-    contenedorInputFile.querySelector('p.text-sm').innerText = "Haz clic aquí para seleccionar el archivo PDF";
-    contenedorInputFile.querySelector('p.text-sm').className = "text-sm font-medium text-slate-300 mt-2";
-}
-
-if (formCarga) {
-    formCarga.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const idEdicion = editIdInput.value;
-        const select = document.getElementById('selectCurso');
-        const optionSelected = select.options[select.selectedIndex];
-        
-        const dni = document.getElementById('adminDni').value.trim();
-        const nombre = document.getElementById('adminNombre').value.trim();
-        const pdfFile = filePdfInput.files[0];
-
-        const nombreCurso = optionSelected.getAttribute('data-curso');
-        const microCredencial = optionSelected.getAttribute('data-micro');
-        const organizacion = optionSelected.getAttribute('data-org');
-
-        mostrarMensaje("🔄 Guardando en la base de datos segura...", "text-blue-400", "border-blue-500/20", "bg-blue-500/10");
-
-        try {
-            let datosAEnviar = {
-                dni_alumno: dni,
-                nombre_alumno: nombre,
-                nombre_curso: nombreCurso,
-                micro_credencial: microCredencial,
-                organizacion: organizacion
-            };
-
-            if (pdfFile) {
-                const pdfBase64 = await convertirPdfABase64(pdfFile);
-                datosAEnviar.url_pdf = pdfBase64;
-            }
-
-            if (idEdicion) {
-                datosAEnviar.fecha_subida = obtenerFechaHoraExacta();
-                await updateDoc(doc(db, "certificados", idEdicion), datosAEnviar);
-                mostrarMensaje("✅ Registro modificado y actualizado.", "text-emerald-400", "border-emerald-500/20", "bg-emerald-500/10");
-            } else {
-                datosAEnviar.codigo_unico = "CERT-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-                datosAEnviar.fecha_subida = obtenerFechaHoraExacta();
-
-                await addDoc(collection(db, "certificados"), datosAEnviar);
-                mostrarMensaje("✅ Nuevo certificado registrado con éxito.", "text-emerald-400", "border-emerald-500/20", "bg-emerald-500/10");
-            }
-
-            resetearFormularioModoRegistro();
-
-        } catch (error) {
-            console.error(error);
-            mostrarMensaje("❌ Error crítico al guardar los datos.", "text-rose-400", "border-rose-500/20", "bg-rose-500/10");
-        }
-    });
-}
-
-function mostrarMensaje(texto, colorClase, bordeClase, fondoClase) {
-    if (statusAdmin) {
-        statusAdmin.className = `mt-4 text-sm text-center font-medium p-3 rounded-xl border ${colorClase} ${bordeClase} ${fondoClase} block`;
-        statusAdmin.innerText = texto;
-    }
-}
+// Filtrar tabla en tiempo real por DNI
+tablaBuscador.addEventListener('input', (e) => {
+    const texto = e.target.value.trim();
+    const filtrados = todosLosCertificados.filter(c => c.dni_alumno.includes(texto));
+    renderizarTabla(filtrados);
+});

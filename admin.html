@@ -4,108 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - Gestión de Certificados</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ucMorado: '#7800c0',
+                        ucRojo: '#e60000',
+                        ucGris: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans flex flex-col justify-between">
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col justify-between">
 
-    <nav class="bg-slate-950/60 border-b border-slate-800 backdrop-blur-md px-6 py-4 flex justify-between items-center">
+    <nav class="bg-white border-b border-slate-200 shadow-sm px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <span class="text-2xl">⚙️</span>
+            <span class="text-xl text-ucMorado"><i class="fa-solid fa-sliders"></i></span>
             <div>
-                <h1 class="text-lg font-bold text-white leading-none">Console Académica</h1>
-                <span class="text-xs text-purple-400 font-medium">Panel Administrador</span>
+                <h1 class="text-base font-black text-slate-900 leading-none">Console Académica</h1>
+                <span class="text-xs text-ucMorado font-bold uppercase tracking-wider">Panel Administrador</span>
             </div>
         </div>
-        <button id="btnCerrarSesion" class="border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition active:scale-95">
-            Cerrar Sesión 🚪
+        <button id="btnCerrarSesion" class="border-2 border-ucRojo hover:bg-red-50 text-ucRojo px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition active:scale-95 flex items-center gap-1.5">
+            <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
         </button>
     </nav>
 
-    <main class="flex-grow max-w-5xl w-full mx-auto px-6 py-10 space-y-12">
+    <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
         
-        <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-sm max-w-3xl mx-auto">
-            <div class="mb-6">
-                <h2 id="formTitulo" class="text-2xl font-bold text-white">Registrar Nuevo Certificado</h2>
-                <p id="formSubtitulo" class="text-sm text-slate-400 mt-1">Sube la credencial comprimida vinculándola a los cursos oficiales del ciclo.</p>
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-md w-full">
+            <div class="mb-6 border-b border-slate-100 pb-4 flex items-center gap-3">
+                <div class="p-3 bg-purple-50 text-ucMorado rounded-xl text-lg">
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                </div>
+                <div>
+                    <h2 id="formTitulo" class="text-xl font-extrabold text-slate-900">Registrar Nuevo Certificado</h2>
+                    <p id="formSubtitulo" class="text-xs text-slate-500 mt-0.5">Asigna credenciales vinculadas a los cursos oficiales del ciclo universitario.</p>
+                </div>
             </div>
             
             <form id="formCarga" class="space-y-5">
                 <input type="hidden" id="editId" value="">
 
+                <div class="grid gap-5 md:grid-cols-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Curso Universitario / Organización</label>
+                        <select id="selectCurso" class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 w-full text-slate-800 focus:outline-none focus:border-ucMorado transition text-sm font-medium cursor-pointer" required>
+                            <option value="" class="text-slate-400">-- Selecciona el Curso Académico --</option>
+                            <option value="Python" data-curso="TÉCNICAS DE Programación" data-micro="Fundamentos de Python" data-org="Cisco Academia">📚 Ciclo 1: Técnicas de Programación (Python - Cisco)</option>
+                            <option value="Java1" data-curso="Programación Orientado a Objetos" data-micro="Java Fundamentals" data-org="Oracle Academia">📚 Ciclo 2: Programación Orientada a Objetos (Java - Oracle)</option>
+                            <option value="DB1" data-curso="Base de datos 1" data-micro="Database Foundations" data-org="Oracle Academia">📚 Ciclo 3: Base de Datos I (Oracle)</option>
+                            <option value="JS1" data-curso="Estructura de Datos" data-micro="JavaScript Essential 1" data-org="Cisco Academia">📚 Ciclo 3: Estructura de Datos (JavaScript - Cisco)</option>
+                            <option value="Java2" data-curso="Análisis y diseño de software" data-micro="Java Foundations" data-org="Oracle Academia">📚 Ciclo 4: Análisis y Diseño de Software (Java - Oracle)</option>
+                            <option value="Web" data-curso="Programación Web" data-micro="HTML/CSS Essentials" data-org="Cisco Academia">📚 Ciclo 4: Programación Web (HTML/CSS - Cisco)</option>
+                            <option value="Hardware" data-curso="Arquitectura del Computador" data-micro="IT Essential" data-org="Cisco Academia">📚 Ciclo 5: Arquitectura del Computador (IT Essential - Cisco)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Carrera / Especialidad Profesional</label>
+                        <select id="selectCarrera" class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 w-full text-slate-800 focus:outline-none focus:border-ucMorado transition text-sm font-medium cursor-pointer" required>
+                            <option value="Arquitectura">📐 Arquitectura</option>
+                            <option value="Arquitectura y Diseño de Interiores">🏡 Arquitectura y Diseño de Interiores</option>
+                            <option value="Ingeniería Ambiental">🌱 Ingeniería Ambiental</option>
+                            <option value="Ingeniería Civil">🏗️ Ingeniería Civil</option>
+                            <option value="Ingeniería de Minas">⛏️ Ingeniería de Minas</option>
+                            <option value="Ingeniería de Sistemas e Informática" selected>💻 Ingeniería de Sistemas e Informática</option>
+                            <option value="Ingeniería Eléctrica">⚡ Ingeniería Eléctrica</option>
+                            <option value="Ingeniería Empresarial">📊 Ingeniería Empresarial</option>
+                            <option value="Ingeniería Industrial">🏭 Ingeniería Industrial</option>
+                            <option value="Ingeniería Mecánica">⚙️ Ingeniería Mecánica</option>
+                            <option value="Ingeniería Mecatrónica">🤖 Ingeniería Mecatrónica</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid gap-5 md:grid-cols-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">DNI / Pasaporte del Alumno</label>
+                        <input type="text" id="adminDni" class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 w-full text-slate-800 placeholder-slate-400 focus:outline-none focus:border-ucMorado transition text-sm" required placeholder="Ej. 73928102">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nombre Completo del Estudiante</label>
+                        <input type="text" id="adminNombre" class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 w-full text-slate-800 placeholder-slate-400 focus:outline-none focus:border-ucMorado transition text-sm" required placeholder="Ej. Carlos Mendoza Ramos">
+                    </div>
+                </div>
+
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Curso Universitario / Organización</label>
-                    <select id="selectCurso" class="bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 w-full text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm font-medium cursor-pointer" required>
-                        <option value="" class="text-slate-500">-- Selecciona el Curso Académico --</option>
-                        <option value="Python" data-curso="TÉCNICAS DE Programación" data-micro="Fundamentos de Python" data-org="Cisco Academia">📚 Ciclo 1: Técnicas de Programación (Python - Cisco)</option>
-                        <option value="Java1" data-curso="Programación Orientado a Objetos" data-micro="Java Fundamentals" data-org="Oracle Academia">📚 Ciclo 2: Programación Orientada a Objetos (Java - Oracle)</option>
-                        <option value="DB1" data-curso="Base de datos 1" data-micro="Database Foundations" data-org="Oracle Academia">📚 Ciclo 3: Base de Datos I (Oracle)</option>
-                        <option value="JS1" data-curso="Estructura de Datos" data-micro="JavaScript Essential 1" data-org="Cisco Academia">📚 Ciclo 3: Estructura de Datos (JavaScript - Cisco)</option>
-                        <option value="Java2" data-curso="Análisis y diseño de software" data-micro="Java Foundations" data-org="Oracle Academia">📚 Ciclo 4: Análisis y Diseño de Software (Java - Oracle)</option>
-                        <option value="Web" data-curso="Programación Web" data-micro="HTML/CSS Essentials" data-org="Cisco Academia">📚 Ciclo 4: Programación Web (HTML/CSS - Cisco)</option>
-                        <option value="Hardware" data-curso="Arquitectura del Computador" data-micro="IT Essential" data-org="Cisco Academia">📚 Ciclo 5: Arquitectura del Computador (IT Essential - Cisco)</option>
-                    </select>
-                </div>
-
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">DNI / Pasaporte del Alumno</label>
-                        <input type="text" id="adminDni" class="bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 w-full text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm" required placeholder="Ej. 73928102">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Nombre Completo del Estudiante</label>
-                        <input type="text" id="adminNombre" class="bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-3 w-full text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition text-sm" required placeholder="Ej. Carlos Mendoza Ramos">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Archivo Certificado (PDF Optimizado)</label>
+                    <div id="zonaArrastre" class="border-2 border-dashed border-slate-300 hover:border-ucMorado bg-slate-50 rounded-xl p-8 transition relative flex flex-col items-center justify-center text-center cursor-pointer group min-h-[150px]">
+                        <input type="file" id="filePdf" accept=".pdf" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10">
+                        
+                        <div id="contenidoZona" class="flex flex-col items-center justify-center pointer-events-none">
+                            <span class="text-4xl text-slate-400 group-hover:scale-110 group-hover:text-ucMorado transition duration-200">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </span>
+                            <p class="text-base font-bold text-slate-700 mt-2">Haz clic aquí para cargar el documento PDF</p>
+                            <p class="text-xs text-slate-400 mt-1">El archivo se convertirá localmente de forma segura en memoria.</p>
+                        </div>
                     </div>
                 </div>
 
-                <div id="contenedorInputFile">
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Archivo Certificado (PDF Comprimido &lt; 1MB)</label>
-                    <div class="border-2 border-dashed border-slate-700 hover:border-purple-500/60 bg-slate-900/40 rounded-xl p-4 transition relative flex flex-col items-center justify-center text-center cursor-pointer group">
-                        <input type="file" id="filePdf" accept=".pdf" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer">
-                        <span class="text-2xl group-hover:scale-110 transition duration-200">📄</span>
-                        <p class="text-sm font-medium text-slate-300 mt-2">Haz clic aquí para seleccionar el archivo PDF</p>
-                        <p class="text-xs text-slate-500 mt-1">Solo documentos optimizados para web (.pdf)</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <button type="submit" id="btnGuardar" class="flex-grow bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-3 rounded-xl transition active:scale-95 shadow-lg shadow-emerald-950/20 text-base">
-                        Subir y Registrar Credencial 🚀
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" id="btnGuardar" class="flex-grow bg-ucMorado hover:bg-purple-900 text-white font-bold py-3.5 rounded-xl transition active:scale-95 shadow-md text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar y Validar Credencial
                     </button>
-                    <button type="button" id="btnCancelarEdicion" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-5 py-3 rounded-xl font-medium transition hidden">
+                    <button type="button" id="btnCancelarEdicion" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition hidden">
                         Cancelar
                     </button>
                 </div>
             </form>
             
-            <p id="statusAdmin" class="mt-4 text-sm text-center font-medium p-3 rounded-xl bg-slate-900 border border-slate-800 hidden"></p>
+            <p id="statusAdmin" class="mt-4 text-sm text-center font-bold p-3 rounded-xl border hidden"></p>
         </div>
 
-        <div class="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-6 shadow-2xl backdrop-blur-sm">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-md w-full">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
                 <div>
-                    <h3 class="text-xl font-bold text-white">Listado General de Certificados</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Filtra por DNI en tiempo real y gestiona los registros guardados.</p>
+                    <h3 class="text-lg font-extrabold text-slate-900">Listado General de Registros</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Monitoreo histórico y gestión de firmas asíncronas.</p>
                 </div>
-                <div class="w-full md:w-72">
-                    <input type="text" id="tablaBuscador" placeholder="🔍 Buscar por DNI del alumno..." 
-                           class="bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2 w-full text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition">
+                <div class="w-full md:w-80">
+                    <input type="text" id="tablaBuscador" placeholder="🔍 Filtrar por DNI..." 
+                           class="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 w-full text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-ucMorado transition">
                 </div>
             </div>
 
-            <div class="overflow-x-auto rounded-xl border border-slate-700/50">
-                <table class="w-full text-left border-collapse bg-slate-900/40 text-sm">
-<thead>
-    <tr class="bg-slate-950/50 text-slate-400 border-b border-slate-700/50 font-medium">
-        <th class="p-4">DNI</th>
-        <th class="p-4">Estudiante</th>
-        <th class="p-4">Curso Académico</th>
-        <th class="p-4">Código</th>
-        <th class="p-4">Fecha/Hora Registro</th> <th class="p-4 text-center">Acciones</th>
-    </tr>
-</thead>
-                    <tbody id="tablaCuerpo" class="divide-y divide-slate-800/60">
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 border-b border-slate-200 text-xs font-bold uppercase tracking-wider">
+                            <th class="p-4">DNI</th>
+                            <th class="p-4">Estudiante</th>
+                            <th class="p-4">Curso / Carrera</th>
+                            <th class="p-4">Código</th>
+                            <th class="p-4">Fecha/Hora Registro</th>
+                            <th class="p-4 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo" class="divide-y divide-slate-100 font-medium text-slate-700">
                         <tr>
-                            <td colspan="5" class="p-6 text-center text-slate-500 font-medium">Cargando base de datos...</td>
+                            <td colspan="6" class="p-6 text-center text-slate-400 font-medium">Sincronizando con el servidor institucional...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -114,8 +158,8 @@
 
     </main>
 
-    <footer class="relative z-10 w-full border-t border-slate-800/60 bg-slate-950/40 backdrop-blur-sm text-center py-4 text-slate-500 text-xs">
-        &copy; 2026 Academia Control Console.
+    <footer class="bg-white border-t border-slate-200 text-center py-4 text-slate-400 text-xs font-medium">
+        &copy; 2026 Universidad Continental | Panel Console Académica.
     </footer>
 
     <script type="module" src="js/admin.js"></script>
